@@ -8,11 +8,17 @@ const { logColoredResults } = require("./logger");
 const { segragateResponseResults } = require("./responseSegregator");
 const { getResultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
 
-const urls = [
-  "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
-  "https://portal.uiic.in/GCWebPort/login/LoginAction.do?p=login",
-];
+const urls = {
+  public: [
+    "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
+    "https://portal.uiic.in/GCWebPort/login/LoginAction.do?p=login",
+  ],
+  proxyRestricted: [
+    "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
+  ],
+};
 
+const publicAxiosInstance = axios.create();
 const proxiedAxiosInstance = axios.create({
   proxy: {
     host: process.env.PROXY_HOST,
@@ -21,18 +27,24 @@ const proxiedAxiosInstance = axios.create({
 });
 
 const getRequestsPromiseResults = async () => {
-  const getRequestPromise = (url) => proxiedAxiosInstance.get(url);
+  const getRequestPromise = (url, axiosInstance) => axiosInstance.get(url);
 
-  const result = await Promise.allSettled(
-    urls.map((url) => getRequestPromise(url))
+  const publicWebsiteResults = await Promise.allSettled(
+    urls.public.map((url) => getRequestPromise(url, publicAxiosInstance))
   );
 
-  return result;
+  const proxyRestrictedWebsiteResults = await Promise.allSettled(
+    urls.proxyRestricted.map((url) =>
+      getRequestPromise(url, proxiedAxiosInstance)
+    )
+  );
+
+  return [...publicWebsiteResults, ...proxyRestrictedWebsiteResults];
 };
 
 const getReadableResultObjects = (promiseResults) =>
-  promiseResults.map((requestResult, resultIndex) => ({
-    url: urls[resultIndex],
+  promiseResults.map((requestResult) => ({
+    url: (requestResult.value || requestResult.reason).config.url,
     running: requestResult.status === "fulfilled" ? "Yes" : "No",
     reason:
       requestResult.status !== "fulfilled"
