@@ -40,7 +40,10 @@ const getReadableResultObjects = (promiseResults) =>
         : "",
   }));
 
-const sendReportEmail = async ({ segregatedResponseResults }) => {
+const sendReportEmail = async ({
+  segregatedResponseResults,
+  resultCSVPath,
+}) => {
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
     port: process.env.MAIL_HOST_PORT,
@@ -57,7 +60,7 @@ const sendReportEmail = async ({ segregatedResponseResults }) => {
     html: generateEmailHTML({ segregatedResponseResults }),
     attachments: [
       {
-        path: getResultCSVPath(),
+        path: resultCSVPath,
       },
     ],
   };
@@ -72,6 +75,7 @@ getRequestsPromiseResults().then((promiseResults) => {
   logColoredResults(segregatedResponseResults);
 
   writeResponseResultsToCsv(responsesResult).then(() => {
-    sendReportEmail({ segregatedResponseResults });
+    resultCSVPath = getResultCSVPath();
+    sendReportEmail({ segregatedResponseResults, resultCSVPath });
   });
 });
