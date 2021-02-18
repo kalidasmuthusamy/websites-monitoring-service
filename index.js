@@ -1,21 +1,24 @@
+require("dotenv").config();
+
 const axios = require("axios").default;
-const ObjectsToCsv = require("objects-to-csv");
-const { exec } = require("child_process");
-const os = require("os");
-const { Table: ConsoleTable } = require("console-table-printer");
+const nodemailer = require("nodemailer");
+
+const { generateEmailHTML } = require("./emailHtmlGenerator");
+const { logColoredResults } = require("./logger");
+const { segragateResponseResults } = require("./responseSegregator");
+const { getResultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
 
 const urls = [
   "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
+  "https://portal.uiic.in/GCWebPort/login/LoginAction.do?p=login",
 ];
 
 const proxiedAxiosInstance = axios.create({
   proxy: {
-    host: "10.211.36.180",
-    port: 3128,
+    host: process.env.PROXY_HOST,
+    port: process.env.PROXY_HOST_PORT,
   },
 });
-
-const getResultCSVPath = () => `${__dirname}/result.csv`;
 
 const getRequestsPromiseResults = async () => {
   const getRequestPromise = (url) => proxiedAxiosInstance.get(url);
@@ -37,44 +40,38 @@ const getReadableResultObjects = (promiseResults) =>
         : "",
   }));
 
-const writeResponseResultsToCsv = async (responsesResult) => {
-  const csv = new ObjectsToCsv(responsesResult);
-  await csv.toDisk(getResultCSVPath());
-};
-
-const openResultCsv = () => {
-  if (os.type() == "Windows_NT") {
-    exec(`explorer ${getResultCSVPath()}`);
-  } else {
-    exec(`open ${getResultCSVPath()}`);
-  }
-};
-
-const logColoredResults = (responsesResult) => {
-  const table = new ConsoleTable();
-
-  const [successResults, errorResults] = [[], []];
-
-  responsesResult.forEach((responseResult) => {
-    if (responseResult.running === "Yes") {
-      successResults.push(responseResult);
-    } else {
-      errorResults.push(responseResult);
-    }
+const sendReportEmail = async ({ segregatedResponseResults }) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: process.env.MAIL_HOST_PORT,
+    auth: {
+      user: process.env.MAIL_USER_NAME,
+      pass: process.env.MAIL_USER_PASSWORD,
+    },
   });
 
-  table.addRows(successResults, { color: "green" });
-  table.addRows(errorResults, { color: "red" });
+  const emailObject = {
+    from: process.env.MAIL_FROM_ADDRESS,
+    to: process.env.MAIL_RECIPIENT_ADDRESSES,
+    subject: `Website Monitoring Result - ${new Date().toLocaleString()}`,
+    html: generateEmailHTML({ segregatedResponseResults }),
+    attachments: [
+      {
+        path: getResultCSVPath(),
+      },
+    ],
+  };
 
-  table.printTable();
+  await transporter.sendMail(emailObject);
 };
 
 getRequestsPromiseResults().then((promiseResults) => {
   const responsesResult = getReadableResultObjects(promiseResults);
+  const segregatedResponseResults = segragateResponseResults(responsesResult);
 
-  logColoredResults(responsesResult);
+  logColoredResults(segregatedResponseResults);
 
   writeResponseResultsToCsv(responsesResult).then(() => {
-    openResultCsv();
+    sendReportEmail({ segregatedResponseResults });
   });
 });
