@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
 const { generateEmailHTML } = require("./emailHtmlGenerator");
 const { logColoredResults } = require("./logger");
 const { segragateResponseResults } = require("./responseSegregator");
-const { getResultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
+const { resultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
 
 const urls = {
   public: [
@@ -14,7 +14,7 @@ const urls = {
     "https://portal.uiic.in/GCWebPort/login/LoginAction.do?p=login",
   ],
   proxyRestricted: [
-    "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
+    // "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
   ],
 };
 
@@ -87,7 +87,8 @@ getRequestsPromiseResults().then((promiseResults) => {
   logColoredResults(segregatedResponseResults);
 
   writeResponseResultsToCsv(responsesResult).then(() => {
-    resultCSVPath = getResultCSVPath();
-    sendReportEmail({ segregatedResponseResults, resultCSVPath });
+    if (segregatedResponseResults.errorResults.length > 0) {
+      sendReportEmail({ segregatedResponseResults, resultCSVPath });
+    }
   });
 });
