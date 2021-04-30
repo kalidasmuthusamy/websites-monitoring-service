@@ -6,10 +6,12 @@ const getResultCSVPath = () => {
   // month-date-year format
   const readableDateStr = currentDateTime
     .toLocaleDateString()
-    .replace(/\//g, "-");
-  const readableTimeStr = currentDateTime.toLocaleTimeString();
+    .replace(/\//g, "_");
+  const readableTimeStr = currentDateTime
+    .toLocaleTimeString("en-IN", { hour12: false })
+    .replace(/:/g, "_");
 
-  return `${__dirname}/result-${readableDateStr}-${readableTimeStr}.csv`;
+  return `${__dirname}/result_${readableDateStr}_${readableTimeStr}.csv`;
 };
 const resultCSVPath = getResultCSVPath();
 

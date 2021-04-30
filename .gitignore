@@ -1,4 +1,4 @@
 node_modules/
 result.csv
-result-*.csv
+result*.csv
 .env
