@@ -18,12 +18,17 @@ const urls = {
   ],
 };
 
-const publicAxiosInstance = axios.create();
-const proxiedAxiosInstance = axios.create({
+const agent = tunnel.httpsOverHttp({
   proxy: {
     host: process.env.PROXY_HOST,
     port: process.env.PROXY_HOST_PORT,
   },
+});
+
+const publicAxiosInstance = axios.create();
+const proxiedAxiosInstance = axios.create({
+  httpsAgent: agent,
+  proxy: false,
 });
 
 const getRequestsPromiseResults = async () => {
