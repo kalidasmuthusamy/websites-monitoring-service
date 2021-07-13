@@ -2,21 +2,15 @@ require("dotenv").config();
 
 const axios = require("axios").default;
 const nodemailer = require("nodemailer");
+const tunnel = require("tunnel");
 
 const { generateEmailHTML } = require("./emailHtmlGenerator");
 const { logColoredResults } = require("./logger");
 const { segragateResponseResults } = require("./responseSegregator");
 const { resultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
-
-const urls = {
-  public: [
-    "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
-    "https://portal.uiic.in/GCWebPort/login/LoginAction.do?p=login",
-  ],
-  proxyRestricted: [
-    // "https://portal.uiic.in/GCWebPortal/login/LoginAction.do?p=login",
-  ],
-};
+const {
+  monitoringBatchesConfig,
+} = require("./monitoringBatchesConfigProvider");
 
 const agent = tunnel.httpsOverHttp({
   proxy: {
@@ -31,15 +25,18 @@ const proxiedAxiosInstance = axios.create({
   proxy: false,
 });
 
-const getRequestsPromiseResults = async () => {
+const getRequestsPromiseResults = async ({
+  publicURLs = [],
+  proxyRestrictedURLs = [],
+}) => {
   const getRequestPromise = (url, axiosInstance) => axiosInstance.get(url);
 
   const publicWebsiteResults = await Promise.allSettled(
-    urls.public.map((url) => getRequestPromise(url, publicAxiosInstance))
+    publicURLs.map((url) => getRequestPromise(url, publicAxiosInstance))
   );
 
   const proxyRestrictedWebsiteResults = await Promise.allSettled(
-    urls.proxyRestricted.map((url) =>
+    proxyRestrictedURLs.map((url) =>
       getRequestPromise(url, proxiedAxiosInstance)
     )
   );
@@ -58,8 +55,9 @@ const getReadableResultObjects = (promiseResults) =>
   }));
 
 const sendReportEmail = async ({
-  segregatedResponseResults,
+  statusSegregatedResponseResults,
   resultCSVPath,
+  recipientEmailAddresses = [],
 }) => {
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
@@ -72,9 +70,9 @@ const sendReportEmail = async ({
 
   const emailObject = {
     from: process.env.MAIL_FROM_ADDRESS,
-    to: process.env.MAIL_RECIPIENT_ADDRESSES,
+    to: recipientEmailAddresses.join(", "),
     subject: `Website Monitoring Result - ${new Date().toLocaleString()}`,
-    html: generateEmailHTML({ segregatedResponseResults }),
+    html: generateEmailHTML({ statusSegregatedResponseResults }),
     attachments: [
       {
         path: resultCSVPath,
@@ -85,15 +83,33 @@ const sendReportEmail = async ({
   await transporter.sendMail(emailObject);
 };
 
-getRequestsPromiseResults().then((promiseResults) => {
-  const responsesResult = getReadableResultObjects(promiseResults);
-  const segregatedResponseResults = segragateResponseResults(responsesResult);
+monitoringBatchesConfig.forEach((monitoringBatchConfig) => {
+  const {
+    urls: {
+      public: publicURLs = [],
+      proxyRestricted: proxyRestrictedURLs = [],
+    },
+    recipientEmailAddresses,
+  } = monitoringBatchConfig;
 
-  logColoredResults(segregatedResponseResults);
+  getRequestsPromiseResults({
+    publicURLs,
+    proxyRestrictedURLs,
+  }).then((promiseResults) => {
+    const responsesResult = getReadableResultObjects(promiseResults);
+    const statusSegregatedResponseResults =
+      segragateResponseResults(responsesResult);
 
-  writeResponseResultsToCsv(responsesResult).then(() => {
-    if (segregatedResponseResults.errorResults.length > 0) {
-      sendReportEmail({ segregatedResponseResults, resultCSVPath });
-    }
+    logColoredResults(statusSegregatedResponseResults);
+
+    writeResponseResultsToCsv(responsesResult).then(() => {
+      if (statusSegregatedResponseResults.errorResults.length > 0) {
+        sendReportEmail({
+          statusSegregatedResponseResults,
+          resultCSVPath,
+          recipientEmailAddresses,
+        });
+      }
+    });
   });
 });

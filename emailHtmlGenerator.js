@@ -23,7 +23,7 @@ const generateHTMLTable = (arrayData) => {
 };
 
 const generateEmailHTML = ({
-  segregatedResponseResults: { successResults, errorResults },
+  statusSegregatedResponseResults: { successResults, errorResults },
 }) => {
   const indexedResponseResults = [...successResults, ...errorResults].map(
     (responseResult, index) => ({
