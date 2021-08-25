@@ -4,6 +4,8 @@ const axios = require("axios").default;
 const nodemailer = require("nodemailer");
 const tunnel = require("tunnel");
 
+const CronJob = require("cron").CronJob;
+
 const { generateEmailHTML } = require("./emailHtmlGenerator");
 const { logColoredResults } = require("./logger");
 const { segragateResponseResults } = require("./responseSegregator");
@@ -11,6 +13,10 @@ const { resultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
 const {
   monitoringBatchesConfig,
 } = require("./monitoringBatchesConfigProvider");
+
+const {
+  getMonitoringBatchesConfiguredForCurrentDateTime,
+} = require("./cronHelpers");
 
 const agent = tunnel.httpsOverHttp({
   proxy: {
@@ -83,7 +89,7 @@ const sendReportEmail = async ({
   await transporter.sendMail(emailObject);
 };
 
-monitoringBatchesConfig.forEach((monitoringBatchConfig) => {
+const processMonitoringBatch = (monitoringBatchConfig) => {
   const {
     urls: {
       public: publicURLs = [],
@@ -112,4 +118,21 @@ monitoringBatchesConfig.forEach((monitoringBatchConfig) => {
       }
     });
   });
-});
+};
+
+const jobTicker = () => {
+  const processableMonitoringBatches =
+    getMonitoringBatchesConfiguredForCurrentDateTime(monitoringBatchesConfig);
+
+  processableMonitoringBatches.forEach(processMonitoringBatch);
+};
+
+const job = new CronJob(
+  "0 * * * * *", // CRON Timer for this master job (should be LCM of all cron schedules defined in monitoring batch - to cover all)
+  jobTicker, // Function which will be executed on CRON Timings
+  null, //no oncomplete callback
+  false, //start implicitly
+  "Asia/Kolkata" //CRON Job Timing should be based on IST timezone (Useful when server's system time is not IST)
+);
+
+job.start();

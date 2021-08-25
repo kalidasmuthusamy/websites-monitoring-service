@@ -1,6 +1,7 @@
 const ObjectsToCsv = require("objects-to-csv");
 const { exec } = require("child_process");
 const os = require("os");
+
 const getResultCSVPath = () => {
   const currentDateTime = new Date();
   // month-date-year format
