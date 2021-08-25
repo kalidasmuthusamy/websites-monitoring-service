@@ -36,21 +36,16 @@ const isCurrentDateTimeMatchesWithCronExpression = (cronExpression, date) => {
   return true;
 };
 
-const getMonitoringBatchesConfiguredForCurrentDateTime = (
-  monitoringBatchesConfig
-) => {
-  // Even if server running Node Process is outside India, consider Indian Time
-  // As Cron is configured as per Indian Time Zone
-  const currentDateTime = convertTimeZoneForDate(new Date(), "Asia/Kolkata");
-
+const getMonitoringBatchesWithCronMatchingDateTime = ({
+  monitoringBatchesConfig,
+  dateTime,
+}) => {
   return monitoringBatchesConfig.filter(({ cronSchedule: batchCronSchedule }) =>
-    isCurrentDateTimeMatchesWithCronExpression(
-      batchCronSchedule,
-      currentDateTime
-    )
+    isCurrentDateTimeMatchesWithCronExpression(batchCronSchedule, dateTime)
   );
 };
 
 module.exports = {
-  getMonitoringBatchesConfiguredForCurrentDateTime,
+  getMonitoringBatchesWithCronMatchingDateTime,
+  convertTimeZoneForDate,
 };

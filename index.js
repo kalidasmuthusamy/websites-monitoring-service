@@ -16,8 +16,11 @@ const {
 } = require("./monitoringBatchesConfigProvider");
 
 const {
-  getMonitoringBatchesConfiguredForCurrentDateTime,
+  getMonitoringBatchesWithCronMatchingDateTime,
+  convertTimeZoneForDate,
 } = require("./cronHelpers");
+
+const PROCESS_TIME_ZONE = "Asia/Kolkata"; // Required for CRON Configuration
 
 const agent = tunnel.httpsOverHttp({
   proxy: {
@@ -124,8 +127,13 @@ const processMonitoringBatch = (monitoringBatchConfig) => {
 };
 
 const jobTicker = () => {
+  const currentDateTime = convertTimeZoneForDate(new Date(), PROCESS_TIME_ZONE);
+
   const processableMonitoringBatches =
-    getMonitoringBatchesConfiguredForCurrentDateTime(monitoringBatchesConfig);
+    getMonitoringBatchesWithCronMatchingDateTime({
+      monitoringBatchesConfig,
+      dateTime: currentDateTime,
+    });
 
   processableMonitoringBatches.forEach(processMonitoringBatch);
 };
@@ -135,7 +143,7 @@ const job = new CronJob(
   jobTicker, // Function which will be executed on CRON Timings
   null, //no oncomplete callback
   false, //start implicitly
-  "Asia/Kolkata" //CRON Job Timing should be based on IST timezone (Useful when server's system time is not IST)
+  PROCESS_TIME_ZONE //CRON Job Timing should be based on IST timezone (Useful when server's system time is not IST)
 );
 
 job.start();
