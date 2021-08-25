@@ -9,7 +9,8 @@ const CronJob = require("cron").CronJob;
 const { generateEmailHTML } = require("./emailHtmlGenerator");
 const { logColoredResults } = require("./logger");
 const { segragateResponseResults } = require("./responseSegregator");
-const { resultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
+const { getResultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
+
 const {
   monitoringBatchesConfig,
 } = require("./monitoringBatchesConfigProvider");
@@ -98,6 +99,8 @@ const processMonitoringBatch = (monitoringBatchConfig) => {
     recipientEmailAddresses,
   } = monitoringBatchConfig;
 
+  const resultCSVPath = getResultCSVPath();
+
   getRequestsPromiseResults({
     publicURLs,
     proxyRestrictedURLs,
@@ -108,7 +111,7 @@ const processMonitoringBatch = (monitoringBatchConfig) => {
 
     logColoredResults(statusSegregatedResponseResults);
 
-    writeResponseResultsToCsv(responsesResult).then(() => {
+    writeResponseResultsToCsv(responsesResult, resultCSVPath).then(() => {
       if (statusSegregatedResponseResults.errorResults.length > 0) {
         sendReportEmail({
           statusSegregatedResponseResults,
