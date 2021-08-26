@@ -124,6 +124,12 @@ const processMonitoringBatch = (monitoringBatchConfig) => {
       }
     });
   });
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+});
+=======
+>>>>>>> Stashed changes
 };
 
 const jobTicker = () => {
@@ -139,7 +145,11 @@ const jobTicker = () => {
 };
 
 const job = new CronJob(
+<<<<<<< Updated upstream
   "0 * * * * *", // CRON Timer for this master job (should be LCM of all cron schedules defined in monitoring batch - to cover all)
+=======
+  "* * * * *", // CRON Timer for this master job (should be LCM of all cron schedules defined in monitoring batch - to cover all)
+>>>>>>> Stashed changes
   jobTicker, // Function which will be executed on CRON Timings
   null, //no oncomplete callback
   false, //start implicitly
@@ -147,3 +157,7 @@ const job = new CronJob(
 );
 
 job.start();
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
