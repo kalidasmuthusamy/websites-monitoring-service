@@ -68,6 +68,7 @@ const sendReportEmail = async ({
   statusSegregatedResponseResults,
   resultCSVPath,
   recipientEmailAddresses = [],
+  emailSubject = "Websites Monitoring Report",
 }) => {
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
@@ -81,7 +82,7 @@ const sendReportEmail = async ({
   const emailObject = {
     from: process.env.MAIL_FROM_ADDRESS,
     to: recipientEmailAddresses.join(", "),
-    subject: `Website Monitoring Result - ${new Date().toLocaleString()}`,
+    subject: `${emailSubject} - ${new Date().toLocaleString()}`,
     html: generateEmailHTML({ statusSegregatedResponseResults }),
     attachments: [
       {
@@ -100,6 +101,7 @@ const processMonitoringBatch = (monitoringBatchConfig) => {
       proxyRestricted: proxyRestrictedURLs = [],
     },
     recipientEmailAddresses,
+    emailSubject,
   } = monitoringBatchConfig;
 
   const resultCSVPath = getResultCSVPath();
@@ -120,6 +122,7 @@ const processMonitoringBatch = (monitoringBatchConfig) => {
           statusSegregatedResponseResults,
           resultCSVPath,
           recipientEmailAddresses,
+          emailSubject,
         });
       }
     });

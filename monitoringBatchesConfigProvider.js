@@ -9,6 +9,7 @@ const monitoringBatchesConfig = [
     },
     recipientEmailAddresses: ["bar@example.com", "fab@example.com"],
     cronSchedule: "* * * * *",
+    emailSubject: "Batch 1",
   },
   {
     urls: {
@@ -21,6 +22,7 @@ const monitoringBatchesConfig = [
     },
     recipientEmailAddresses: ["damn@example.com", "bam@example.com"],
     cronSchedule: "* * * * *",
+    emailSubject: "Batch 2",
   },
 ];
 
