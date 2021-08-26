@@ -8,14 +8,7 @@ const monitoringBatchesConfig = [
       proxyRestricted: [],
     },
     recipientEmailAddresses: ["bar@example.com", "fab@example.com"],
-<<<<<<< Updated upstream
     cronSchedule: "*/10 * * * * *",
-=======
-<<<<<<< Updated upstream
-=======
-    cronSchedule: "* * * * *",
->>>>>>> Stashed changes
->>>>>>> Stashed changes
   },
   {
     urls: {
@@ -27,14 +20,7 @@ const monitoringBatchesConfig = [
       proxyRestricted: [],
     },
     recipientEmailAddresses: ["damn@example.com", "bam@example.com"],
-<<<<<<< Updated upstream
     cronSchedule: "*/20 * * * * *",
-=======
-<<<<<<< Updated upstream
-=======
-    cronSchedule: "* * * * *",
->>>>>>> Stashed changes
->>>>>>> Stashed changes
   },
 ];
 
