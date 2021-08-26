@@ -4,13 +4,23 @@ const axios = require("axios").default;
 const nodemailer = require("nodemailer");
 const tunnel = require("tunnel");
 
+const CronJob = require("cron").CronJob;
+
 const { generateEmailHTML } = require("./emailHtmlGenerator");
 const { logColoredResults } = require("./logger");
 const { segragateResponseResults } = require("./responseSegregator");
-const { resultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
+const { getResultCSVPath, writeResponseResultsToCsv } = require("./csvManager");
+
 const {
   monitoringBatchesConfig,
 } = require("./monitoringBatchesConfigProvider");
+
+const {
+  getMonitoringBatchesWithCronMatchingDateTime,
+  convertTimeZoneForDate,
+} = require("./cronHelpers");
+
+const PROCESS_TIME_ZONE = "Asia/Kolkata"; // Required for CRON Configuration
 
 const agent = tunnel.httpsOverHttp({
   proxy: {
@@ -83,7 +93,7 @@ const sendReportEmail = async ({
   await transporter.sendMail(emailObject);
 };
 
-monitoringBatchesConfig.forEach((monitoringBatchConfig) => {
+const processMonitoringBatch = (monitoringBatchConfig) => {
   const {
     urls: {
       public: publicURLs = [],
@@ -91,6 +101,8 @@ monitoringBatchesConfig.forEach((monitoringBatchConfig) => {
     },
     recipientEmailAddresses,
   } = monitoringBatchConfig;
+
+  const resultCSVPath = getResultCSVPath();
 
   getRequestsPromiseResults({
     publicURLs,
@@ -102,7 +114,7 @@ monitoringBatchesConfig.forEach((monitoringBatchConfig) => {
 
     logColoredResults(statusSegregatedResponseResults);
 
-    writeResponseResultsToCsv(responsesResult).then(() => {
+    writeResponseResultsToCsv(responsesResult, resultCSVPath).then(() => {
       if (statusSegregatedResponseResults.errorResults.length > 0) {
         sendReportEmail({
           statusSegregatedResponseResults,
@@ -112,4 +124,26 @@ monitoringBatchesConfig.forEach((monitoringBatchConfig) => {
       }
     });
   });
-});
+};
+
+const jobTicker = () => {
+  const currentDateTime = convertTimeZoneForDate(new Date(), PROCESS_TIME_ZONE);
+
+  const processableMonitoringBatches =
+    getMonitoringBatchesWithCronMatchingDateTime({
+      monitoringBatchesConfig,
+      dateTime: currentDateTime,
+    });
+
+  processableMonitoringBatches.forEach(processMonitoringBatch);
+};
+
+const job = new CronJob(
+  "0 * * * * *", // CRON Timer for this master job (should be LCM of all cron schedules defined in monitoring batch - to cover all)
+  jobTicker, // Function which will be executed on CRON Timings
+  null, //no oncomplete callback
+  false, //start implicitly
+  PROCESS_TIME_ZONE //CRON Job Timing should be based on IST timezone (Useful when server's system time is not IST)
+);
+
+job.start();

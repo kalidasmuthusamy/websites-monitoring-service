@@ -8,6 +8,7 @@ const monitoringBatchesConfig = [
       proxyRestricted: [],
     },
     recipientEmailAddresses: ["bar@example.com", "fab@example.com"],
+    cronSchedule: "*/10 * * * * *",
   },
   {
     urls: {
@@ -19,6 +20,7 @@ const monitoringBatchesConfig = [
       proxyRestricted: [],
     },
     recipientEmailAddresses: ["damn@example.com", "bam@example.com"],
+    cronSchedule: "*/20 * * * * *",
   },
 ];
 
