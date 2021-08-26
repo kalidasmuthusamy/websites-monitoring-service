@@ -139,7 +139,7 @@ const jobTicker = () => {
 };
 
 const job = new CronJob(
-  "0 * * * * *", // CRON Timer for this master job (should be LCM of all cron schedules defined in monitoring batch - to cover all)
+  "* * * * *", // CRON Timer for this master job (should be LCM of all cron schedules defined in monitoring batch - to cover all)
   jobTicker, // Function which will be executed on CRON Timings
   null, //no oncomplete callback
   false, //start implicitly
