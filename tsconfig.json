@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "watch": true,
     "pretty": true,
     "noErrorTruncation": true,
     "target": "es2018",
