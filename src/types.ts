@@ -32,7 +32,6 @@ export interface BatchConfig {
 export interface MonitoringResult {
   url: string;
   statusCode: number;
-  responseTime: number;
   success: boolean;
   error?: string;
   timestamp: Date;

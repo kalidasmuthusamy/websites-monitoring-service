@@ -1,4 +1,4 @@
-import { MonitoringResult } from './types';
+import { MonitoringResult } from "./types";
 
 interface StatusSegregatedResults {
   successResults: MonitoringResult[];
@@ -7,6 +7,7 @@ interface StatusSegregatedResults {
 
 interface GenerateEmailHTMLParams {
   statusSegregatedResponseResults: StatusSegregatedResults;
+  batchId: string;
 }
 
 type ColumnConfig = {
@@ -17,46 +18,58 @@ type ColumnConfig = {
 };
 
 const columns: ColumnConfig[] = [
-  { key: 'name', header: 'Name', width: '20%' },
-  { key: 'url', header: 'URL', width: '30%' },
-  { key: 'statusCode', header: 'Status Code', width: '10%' },
-  { key: 'responseTime', header: 'Response Time (ms)', width: '15%' },
-  { 
-    key: 'success', 
-    header: 'Status', 
-    width: '10%',
-    formatter: (value: boolean) => value ? 'Success' : 'Failed'
+  { key: "name", header: "Name", width: "20%" },
+  { key: "url", header: "URL", width: "35%" },
+  { key: "statusCode", header: "Status Code", width: "15%" },
+  {
+    key: "success",
+    header: "Status",
+    width: "15%",
+    formatter: (value: boolean) => (value ? "Success" : "Failed"),
   },
-  { key: 'error', header: 'Error', width: '15%' }
+  { key: "error", header: "Error", width: "15%" },
 ];
 
 const generateHTMLTable = (data: MonitoringResult[]): string => {
-  const tableStyle = 'width: 100%; border-collapse: collapse; margin: 20px 0; font-family: Arial, sans-serif;';
-  const thStyle = 'background-color: #f8f9fa; color: #2c3e50; padding: 12px; text-align: left; border: 1px solid #ddd; font-weight: 600;';
-  const tdStyle = 'padding: 12px; text-align: left; border: 1px solid #ddd;';
+  const tableStyle =
+    "width: 100%; border-collapse: collapse; margin: 20px 0; font-family: Arial, sans-serif;";
+  const thStyle =
+    "background-color: #f8f9fa; color: #2c3e50; padding: 12px; text-align: left; border: 1px solid #ddd; font-weight: 600;";
+  const tdStyle = "padding: 12px; text-align: left; border: 1px solid #ddd;";
 
   const headerRow = columns
-    .map(col => `<th style="${thStyle}${col.width ? ` width: ${col.width};` : ''}">${col.header}</th>`)
-    .join('');
+    .map(
+      (col) =>
+        `<th style="${thStyle}${col.width ? ` width: ${col.width};` : ""}">${
+          col.header
+        }</th>`
+    )
+    .join("");
 
-  const rows = data.map(item => {
-    const cells = columns.map(col => {
-      const value = item[col.key];
-      const displayValue = col.formatter ? col.formatter(value) : value?.toString() || '';
-      
-      let cellStyle = tdStyle;
-      if (col.key === 'success') {
-        const statusStyle = value 
-          ? 'background-color: #d4edda; color: #28a745;' 
-          : 'background-color: #f8d7da; color: #dc3545;';
-        cellStyle += statusStyle;
-      }
-      
-      return `<td style="${cellStyle}">${displayValue}</td>`;
-    }).join('');
+  const rows = data
+    .map((item) => {
+      const cells = columns
+        .map((col) => {
+          const value = item[col.key];
+          const displayValue = col.formatter
+            ? col.formatter(value)
+            : value?.toString() || "";
 
-    return `<tr>${cells}</tr>`;
-  }).join('');
+          let cellStyle = tdStyle;
+          if (col.key === "success") {
+            const statusStyle = value
+              ? "background-color: #d4edda; color: #28a745;"
+              : "background-color: #f8d7da; color: #dc3545;";
+            cellStyle += statusStyle;
+          }
+
+          return `<td style="${cellStyle}">${displayValue}</td>`;
+        })
+        .join("");
+
+      return `<tr>${cells}</tr>`;
+    })
+    .join("");
 
   return `
     <table style="${tableStyle}">
@@ -72,6 +85,7 @@ const generateHTMLTable = (data: MonitoringResult[]): string => {
 
 export const generateEmailHTML = ({
   statusSegregatedResponseResults: { successResults, errorResults },
+  batchId,
 }: GenerateEmailHTMLParams): string => {
   const indexedResponseResults = [...successResults, ...errorResults].map(
     (responseResult, index) => ({
@@ -86,7 +100,7 @@ export const generateEmailHTML = ({
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Website Monitoring Service</title>
+        <title>[Batch: ${batchId}] Website Monitoring Service</title>
         <style type="text/css">
           body {
             font-family: Arial, sans-serif;
@@ -135,7 +149,7 @@ export const generateEmailHTML = ({
         </style>
       </head>
       <body>
-        <h1>Website Monitoring Results</h1>
+        <h1>[Batch: ${batchId}] Website Monitoring Service</h1>
         ${htmlTableContent}
         <p style="color: #666; font-size: 12px; margin-top: 20px;">
           Generated at ${new Date().toLocaleString()}

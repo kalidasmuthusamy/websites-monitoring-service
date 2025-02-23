@@ -60,21 +60,16 @@ const getReadableResultObjects = (
 ): MonitoringResult[] => {
   return promiseResults.map((result, index) => {
     const endpoint = endpoints[index];
-    const startTime = Date.now(); // For response time calculation
 
     if (result.status === 'fulfilled') {
-      const responseTime = Date.now() - startTime;
-      const withinExpectedTime = !endpoint.expectedResponseTime || responseTime <= endpoint.expectedResponseTime;
       const correctStatusCode = !endpoint.expectedStatusCode || result.value.status === endpoint.expectedStatusCode;
 
       return {
         url: endpoint.url,
         name: endpoint.name,
         statusCode: result.value.status,
-        responseTime,
-        success: withinExpectedTime && correctStatusCode,
-        error: !withinExpectedTime ? 'Response time exceeded expected time' :
-               !correctStatusCode ? 'Unexpected status code' : undefined,
+        success: correctStatusCode,
+        error: !correctStatusCode ? 'Unexpected status code' : undefined,
         timestamp: new Date(),
         batchId
       };
@@ -84,7 +79,6 @@ const getReadableResultObjects = (
       url: endpoint.url,
       name: endpoint.name,
       statusCode: 0,
-      responseTime: Date.now() - startTime,
       success: false,
       error: result.reason?.message || 'Request failed',
       timestamp: new Date(),
@@ -96,7 +90,8 @@ const getReadableResultObjects = (
 const sendReportEmail = async (
   statusSegregatedResponseResults: { successResults: MonitoringResult[]; errorResults: MonitoringResult[] },
   resultCSVPath: string,
-  notification: { emails: string[]; customSubject?: string }
+  notification: { emails: string[]; customSubject?: string },
+  batchId: string
 ): Promise<void> => {
   const transporter = nodemailer.createTransport({
     host: requiredEnvVar('MAIL_HOST'),
@@ -110,8 +105,8 @@ const sendReportEmail = async (
   const emailObject = {
     from: requiredEnvVar('MAIL_FROM_ADDRESS'),
     to: notification.emails.join(', '),
-    subject: `${notification.customSubject || 'Website Monitoring Report'} - ${new Date().toLocaleString()}`,
-    html: generateEmailHTML({ statusSegregatedResponseResults }),
+    subject: `[Batch: ${batchId}] ${notification.customSubject || 'Website Monitoring Report'} - ${new Date().toLocaleString()}`,
+    html: generateEmailHTML({ statusSegregatedResponseResults, batchId }),
     attachments: [{ path: resultCSVPath }]
   };
 
@@ -140,7 +135,8 @@ const processMonitoringBatch = async (batch: BatchConfig): Promise<void> => {
       await sendReportEmail(
         statusSegregatedResponseResults,
         resultCSVPath,
-        batch.notification
+        batch.notification,
+        batch.id
       );
     }
   } catch (error) {
