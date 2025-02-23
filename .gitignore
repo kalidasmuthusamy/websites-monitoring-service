@@ -2,3 +2,5 @@ node_modules/
 result.csv
 result*.csv
 .env
+.vscode/
+.DS_Store
