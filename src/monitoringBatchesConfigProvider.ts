@@ -32,24 +32,32 @@ export const monitoringBatchesConfig: BatchConfig[] = [
     enabled: true,
     endpoints: [
       {
-        name: "Google Search",
-        url: "https://www.google.com",
+        name: "VCW",
+        url: "https://www.vcw.ac.in/",
         method: DEFAULT_CONFIG.ENDPOINT.method,
         expectedStatusCode: DEFAULT_CONFIG.ENDPOINT.expectedStatusCode,
         expectedResponseTime: 1000, // Expect faster response from Google
         timeout: DEFAULT_CONFIG.ENDPOINT.timeout,
       },
       {
-        name: "GitHub",
-        url: "https://github.com",
+        name: "VCW Degree Exam Applications",
+        url: "https://www.vcw.ac.in/degree-exam-applications/",
         method: DEFAULT_CONFIG.ENDPOINT.method,
         expectedStatusCode: DEFAULT_CONFIG.ENDPOINT.expectedStatusCode,
         expectedResponseTime: DEFAULT_CONFIG.ENDPOINT.expectedResponseTime,
         timeout: DEFAULT_CONFIG.ENDPOINT.timeout,
       },
       {
-        name: "NPM",
-        url: "https://www.npmjs.com",
+        name: "VCW Self Learning Exam Application",
+        url: "https://www.vcw.ac.in/self-learning-exam-application/",
+        method: DEFAULT_CONFIG.ENDPOINT.method,
+        expectedStatusCode: DEFAULT_CONFIG.ENDPOINT.expectedStatusCode,
+        expectedResponseTime: DEFAULT_CONFIG.ENDPOINT.expectedResponseTime,
+        timeout: DEFAULT_CONFIG.ENDPOINT.timeout,
+      },
+      {
+        name: "Velalar College of Engineering and Technology Payment",
+        url: "https://pay.velalarengg.ac.in/pay/",
         method: DEFAULT_CONFIG.ENDPOINT.method,
         expectedStatusCode: DEFAULT_CONFIG.ENDPOINT.expectedStatusCode,
         expectedResponseTime: DEFAULT_CONFIG.ENDPOINT.expectedResponseTime,
