@@ -1,6 +1,18 @@
+# Dependencies
 node_modules/
+
+# Environment files
+.env*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Generated files
 result.csv
 result*.csv
-.env
-.vscode/
-.DS_Store
+dist/
